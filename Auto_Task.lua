@@ -2,8 +2,8 @@
 -- CONFIGURAÇÃO (UTILIZADA PELO SCRIPT)
 -- ==========================================
 local TASK_CONFIG = {
-    rank = 3,
-    task = "Hell Warriors"
+    rank = 6,
+    task = "Corrupted Janemba"
 }
 
 -- ==========================================
