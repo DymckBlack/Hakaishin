@@ -3,12 +3,12 @@
 local CONFIG = {
   BLESS_COMMAND = '!bless', -- comando p comprar a bless
   BLESS_PRICE = 5, -- golds
-  BLESS_MONEY = 'ja possui bless', -- mensagem (ou parte dela) simplificada sem acentos
-  BLESS_NOTMONEY = 'nao tem dinheiro suficiente', -- mensagem (ou parte dela) simplificada sem acentos
+  BLESS_MONEY = 'possui bless', -- termo chave para identificar que ja tem
+  BLESS_NOTMONEY = 'nao tem dinheiro', -- termo chave para identificar falta de grana
   UPDATE_GOLD = true, -- se estiver true, vai ficar atualizando a quantidade de gold
   ID_GOLD = 3043, -- id do gold
   ID_DOLLAR = 3035,  -- id do dolar
-  TEXT_GOLD = 'Using one of ([0-9]+) gold bars...', -- texto de qndo vc usa o gold, não altere o () e o que está dentro
+  TEXT_GOLD = 'Using one of ([0-9]+) gold bars...', -- texto de qndo vc usa o gold
   NPC_NAME = '[NPC] Yama'
 }
 
@@ -70,7 +70,7 @@ end
 
 ----------------------------[[ SCRIPT ]]---------------------------
 
--- Função auxiliar para remover acentos e facilitar a checagem de texto do OT
+-- Função para limpar texto (remover acentos e maiúsculas)
 local function cleanText(str)
     if not str then return "" end
     str = str:lower()
@@ -93,7 +93,7 @@ end);
 
 if storage.haveBless == nil then storage.haveBless = false end
 
-local blessScript = macro(1000, "Bless", function() -- Aumentado o intervalo para 1 segundo para evitar spam
+local blessScript = macro(1500, "Bless", function() -- Aumentado para 1.5s para dar tempo da msg sumir/processar
   if not storage.haveBless then
       say(CONFIG.BLESS_COMMAND)
       blessWidget['blessWidget']:setText("Bless: None | Bless Restante: " .. math.floor(goldCount / CONFIG.BLESS_PRICE))
@@ -120,6 +120,7 @@ macro(1, function()
   end
 end);
 
+-- Captura TODOS os tipos de mensagens (inclusive na tela)
 onTextMessage(function(mode, text)
   if blessScript.isOff() then return; end
   
@@ -127,9 +128,10 @@ onTextMessage(function(mode, text)
   local configMoney = cleanText(CONFIG.BLESS_MONEY)
   local configNoMoney = cleanText(CONFIG.BLESS_NOTMONEY)
   
+  -- Checa se a mensagem verde do meio da tela contém as palavras-chave
   if cleanedMessage:find(configNoMoney) then
       storage.haveBless = false
-  elseif cleanedMessage:find(configMoney) then
+  elseif cleanedMessage:find(configMoney) or cleanedMessage:find("ja tem") or cleanedMessage:find("ja possui") then
       storage.haveBless = true
   end
 end);
