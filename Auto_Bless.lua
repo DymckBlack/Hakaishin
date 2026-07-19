@@ -3,8 +3,8 @@
 local CONFIG = {
   BLESS_COMMAND = '!bless', -- comando p comprar a bless
   BLESS_PRICE = 5, -- golds
-  BLESS_MONEY = 'VocÃª jÃ¡ possui bless.', -- messagem se ja tem bless (MENSAGEM ACIMA DO CHAT EM BRANCO.)
-  BLESS_NOTMONEY = 'VocÃª nÃ£o tem dinheiro suficiente. VocÃª precisa de 50k!', -- mensagem se não tem gold (MENSAGEM ACIMA DO CHAT EM BRANCO.)
+  BLESS_MONEY = 'ja possui bless', -- mensagem (ou parte dela) simplificada sem acentos
+  BLESS_NOTMONEY = 'nao tem dinheiro suficiente', -- mensagem (ou parte dela) simplificada sem acentos
   UPDATE_GOLD = true, -- se estiver true, vai ficar atualizando a quantidade de gold
   ID_GOLD = 3043, -- id do gold
   ID_DOLLAR = 3035,  -- id do dolar
@@ -70,6 +70,19 @@ end
 
 ----------------------------[[ SCRIPT ]]---------------------------
 
+-- Função auxiliar para remover acentos e facilitar a checagem de texto do OT
+local function cleanText(str)
+    if not str then return "" end
+    str = str:lower()
+    str = str:gsub("[ãâàáä]", "a")
+    str = str:gsub("[ẽêèéë]", "e")
+    str = str:gsub("[ĩîìíï]", "i")
+    str = str:gsub("[õôòóö]", "o")
+    str = str:gsub("[ũûùúü]", "u")
+    str = str:gsub("ç", "c")
+    return str
+end
+
 local goldCount = 0;
 onTextMessage(function(mode, text)
   if text:find(CONFIG.TEXT_GOLD) then
@@ -78,11 +91,11 @@ onTextMessage(function(mode, text)
   end
 end);
 
-storage.haveBless = false;
-local blessScript = macro(100, "Bless", function()
+if storage.haveBless == nil then storage.haveBless = false end
+
+local blessScript = macro(1000, "Bless", function() -- Aumentado o intervalo para 1 segundo para evitar spam
   if not storage.haveBless then
       say(CONFIG.BLESS_COMMAND)
-      delay(1000)
       blessWidget['blessWidget']:setText("Bless: None | Bless Restante: " .. math.floor(goldCount / CONFIG.BLESS_PRICE))
       blessWidget['blessWidget']:setColor("red")
   else
@@ -90,11 +103,10 @@ local blessScript = macro(100, "Bless", function()
       blessWidget['blessWidget']:setColor("green")
       local findNpc = getCreatureByName(CONFIG.NPC_NAME);
       if findNpc and getDistanceBetween(pos(), findNpc:getPosition()) <= 4 then
-        NPC.say('hi')
+         NPC.say('hi')
       end
   end
 end)
-
 
 macro(1, function()
   if blessScript.isOff() then return; end
@@ -110,10 +122,14 @@ end);
 
 onTextMessage(function(mode, text)
   if blessScript.isOff() then return; end
-  if text:lower():find(CONFIG.BLESS_NOTMONEY) then
+  
+  local cleanedMessage = cleanText(text)
+  local configMoney = cleanText(CONFIG.BLESS_MONEY)
+  local configNoMoney = cleanText(CONFIG.BLESS_NOTMONEY)
+  
+  if cleanedMessage:find(configNoMoney) then
       storage.haveBless = false
-  end
-  if text:lower():find(CONFIG.BLESS_MONEY) then
+  elseif cleanedMessage:find(configMoney) then
       storage.haveBless = true
   end
 end);
